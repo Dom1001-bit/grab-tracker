@@ -112,9 +112,17 @@
         const noDataStateEl = document.getElementById('no-data-state');
 
         // --- Firebase Configuration ---
-        // These variables are provided by the environment.
+        // This configuration is now hardcoded with the details you provided.
+        const firebaseConfig = {
+          apiKey: "AIzaSyBa7qHxfqWK4Tnbtr-Z4Wz3j9jWxdxq8ys",
+          authDomain: "grab-expense-tracker-167a3.firebaseapp.com",
+          projectId: "grab-expense-tracker-167a3",
+          storageBucket: "grab-expense-tracker-167a3.firebasestorage.app",
+          messagingSenderId: "899502074528",
+          appId: "1:899502074528:web:ab59e243fc39ab37bcf7c5"
+        };
+        
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-grab-tracker';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
         // --- Main App Logic ---
@@ -124,6 +132,10 @@
          */
         function initializeFirebase() {
             try {
+                // Check if firebaseConfig has valid keys before initializing
+                if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+                    throw new Error("Firebase configuration is missing or invalid.");
+                }
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
