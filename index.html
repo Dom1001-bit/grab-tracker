@@ -112,7 +112,7 @@
         // --- Firebase Imports ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, query, onSnapshot, where, doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, query, onSnapshot, where, doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, getDocs, collectionGroup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- App State ---
         let db, auth, userId;
@@ -209,27 +209,29 @@
                 renderViewersList(viewers);
             });
         }
-
+        
+        // UPDATED: Use a more efficient and secure query to find shared expenses.
         async function findSharedExpenses() {
-            const usersCollection = collection(db, `artifacts/${appId}/users`);
-            const q = query(usersCollection);
-            const usersSnapshot = await getDocs(q);
+            if (!userId) return;
+            // Use a collection group query to find all 'settings' documents where the current user is a viewer.
+            const permissionsCollectionGroup = collectionGroup(db, 'permissions');
+            const q = query(permissionsCollectionGroup, where('viewers', 'array-contains', userId));
 
-            for(const userDoc of usersSnapshot.docs) {
-                const ownerId = userDoc.id;
-                if (ownerId === userId) continue; // Skip self
-
-                const permsDocPath = `artifacts/${appId}/users/${ownerId}/permissions/settings`;
-                const permsDoc = await getDoc(doc(db, permsDocPath));
-
-                if (permsDoc.exists() && permsDoc.data().viewers && permsDoc.data().viewers.includes(userId)) {
-                    if (!viewSelectorEl.querySelector(`option[value="${ownerId}"]`)) {
+            try {
+                const querySnapshot = await getDocs(q);
+                querySnapshot.forEach((doc) => {
+                    // The document path will be like: artifacts/{appId}/users/{ownerId}/permissions/settings
+                    const ownerId = doc.ref.parent.parent.id; // Get the owner's UID from the path
+                    if (ownerId !== userId && !viewSelectorEl.querySelector(`option[value="${ownerId}"]`)) {
                         const option = document.createElement('option');
                         option.value = ownerId;
                         option.textContent = `Shared by ${ownerId.substring(0, 8)}...`;
                         viewSelectorEl.appendChild(option);
                     }
-                }
+                });
+            } catch (error) {
+                console.error("Error finding shared expenses:", error);
+                // This error often indicates a missing Firestore index. The console will provide a link to create it.
             }
         }
 
