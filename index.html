@@ -9,6 +9,7 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            background-color: #111827;
         }
         /* Custom scrollbar for better aesthetics */
         ::-webkit-scrollbar {
@@ -24,11 +25,18 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #6b7280;
         }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
-<body class="bg-gray-900 text-gray-100">
+<body class="text-gray-100">
 
-    <div id="app" class="container mx-auto p-4 md:p-8 max-w-4xl">
+    <div id="app" class="container mx-auto p-4 md:p-8 max-w-6xl">
         <header class="text-center mb-8">
             <h1 class="text-4xl font-bold text-emerald-400">Grab Expense Tracker</h1>
             <p class="text-gray-400 mt-2">Your consolidated Grab expenses, updated automatically from your email.</p>
@@ -37,8 +45,14 @@
         <!-- User Info and Controls -->
         <div class="bg-gray-800 rounded-lg shadow-xl p-4 mb-6 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div class="text-center md:text-left">
-                <span class="text-sm text-gray-400 block">User ID</span>
-                <span id="userId" class="text-xs text-emerald-500 break-all">Loading...</span>
+                <span class="text-sm text-gray-400 block">Your User ID (Share this with others)</span>
+                <span id="userId" class="text-xs text-emerald-500 break-all cursor-pointer" title="Click to copy">Loading...</span>
+            </div>
+             <div class="flex items-center space-x-4">
+                <label for="view-selector" class="text-gray-300">Viewing Expenses For:</label>
+                <select id="view-selector" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5">
+                    <!-- Options will be populated by JS -->
+                </select>
             </div>
             <div class="flex items-center space-x-4">
                 <label for="month-filter" class="text-gray-300">Filter by Month:</label>
@@ -52,40 +66,43 @@
             </div>
         </div>
 
-        <!-- Expenses Table -->
-        <div class="bg-gray-800 rounded-lg shadow-xl overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm text-left text-gray-300">
-                    <thead class="text-xs text-emerald-400 uppercase bg-gray-700">
-                        <tr>
-                            <th scope="col" class="px-6 py-3">Merchant</th>
-                            <th scope="col" class="px-6 py-3">Date</th>
-                            <th scope="col" class="px-6 py-3 text-right">Total Bill</th>
-                        </tr>
-                    </thead>
-                    <tbody id="expenses-table-body">
-                        <!-- Loading State -->
-                        <tr>
-                            <td colspan="3" class="text-center p-8" id="loading-state">
-                                <div class="flex justify-center items-center space-x-2">
-                                    <svg class="animate-spin h-5 w-5 text-emerald-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    <span class="text-gray-400">Loading expenses...</span>
-                                </div>
-                            </td>
-                        </tr>
-                        <!-- No Data State -->
-                        <tr id="no-data-state" class="hidden">
-                            <td colspan="3" class="text-center p-8 text-gray-500">
-                                No expenses found. Make sure your Apps Script has run.
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+        <!-- Main Content Area -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Expenses Table -->
+            <div class="lg:col-span-2 bg-gray-800 rounded-lg shadow-xl overflow-hidden fade-in">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-300">
+                        <thead class="text-xs text-emerald-400 uppercase bg-gray-700">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">Merchant</th>
+                                <th scope="col" class="px-6 py-3">Date</th>
+                                <th scope="col" class="px-6 py-3 text-right">Total Bill</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expenses-table-body">
+                            <!-- Loading/No Data States will be rendered here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Sharing Management Panel -->
+            <div class="bg-gray-800 rounded-lg shadow-xl p-6 fade-in">
+                <h2 class="text-2xl font-bold text-emerald-400 mb-4">Sharing Settings</h2>
+                <p class="text-sm text-gray-400 mb-4">Grant others read-only access to your expenses by adding their User ID.</p>
+                
+                <div class="flex space-x-2 mb-4">
+                    <input type="text" id="add-viewer-input" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5" placeholder="Enter another user's ID">
+                    <button id="add-viewer-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">Add</button>
+                </div>
+
+                <h3 class="text-lg font-semibold text-gray-300 mt-6 mb-2">Users with Access</h3>
+                <ul id="viewers-list" class="space-y-2">
+                    <!-- Viewer list will be populated by JS -->
+                </ul>
             </div>
         </div>
+        
         <footer class="text-center mt-8 text-gray-500 text-sm">
             <p>Powered by Google Apps Script & Firebase</p>
         </footer>
@@ -94,25 +111,26 @@
     <script type="module">
         // --- Firebase Imports ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, query, onSnapshot, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, query, onSnapshot, where, doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- App State ---
-        let db;
-        let auth;
-        let userId;
-        let allExpenses = [];
-        
+        let db, auth, userId;
+        let expensesData = {}; // Store expenses keyed by ownerId
+        let permissionsUnsubscribe = null;
+        let expensesUnsubscribe = null;
+
         // --- DOM Elements ---
         const userIdEl = document.getElementById('userId');
         const monthFilterEl = document.getElementById('month-filter');
         const monthTotalEl = document.getElementById('month-total');
         const tableBodyEl = document.getElementById('expenses-table-body');
-        const loadingStateEl = document.getElementById('loading-state');
-        const noDataStateEl = document.getElementById('no-data-state');
+        const viewSelectorEl = document.getElementById('view-selector');
+        const addViewerInput = document.getElementById('add-viewer-input');
+        const addViewerBtn = document.getElementById('add-viewer-btn');
+        const viewersListEl = document.getElementById('viewers-list');
 
         // --- Firebase Configuration ---
-        // This configuration is now hardcoded with the details you provided.
         const firebaseConfig = {
           apiKey: "AIzaSyBa7qHxfqWK4Tnbtr-Z4Wz3j9jWxdxq8ys",
           authDomain: "grab-expense-tracker-167a3.firebaseapp.com",
@@ -121,120 +139,117 @@
           messagingSenderId: "899502074528",
           appId: "1:899502074528:web:ab59e243fc39ab37bcf7c5"
         };
-        
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-grab-tracker';
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        const appId = 'default-grab-tracker';
 
         // --- Main App Logic ---
 
-        /**
-         * Initializes the Firebase app and services.
-         */
         function initializeFirebase() {
             try {
-                // Check if firebaseConfig has valid keys before initializing
-                if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
-                    throw new Error("Firebase configuration is missing or invalid.");
-                }
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
             } catch (error) {
                 console.error("Firebase initialization failed:", error);
-                userIdEl.textContent = "Error: Could not connect to services.";
+                userIdEl.textContent = "Error: Could not connect.";
             }
         }
 
-        /**
-         * Handles user authentication state changes.
-         */
         function setupAuthListener() {
             onAuthStateChanged(auth, async (user) => {
                 if (user) {
                     userId = user.uid;
                     userIdEl.textContent = userId;
-                    // User is signed in, start listening for their expense data.
-                    listenForExpenses();
-                } else {
-                    // User is signed out, attempt to sign in.
-                    await authenticateUser();
-                }
-            });
-        }
-
-        /**
-         * Authenticates the user using the provided token or signs in anonymously.
-         */
-        async function authenticateUser() {
-            try {
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
+                    
+                    // Initialize view selector with current user
+                    viewSelectorEl.innerHTML = `<option value="${userId}">My Expenses</option>`;
+                    
+                    // Start listening to data
+                    listenForExpenses(userId);
+                    listenForPermissions();
+                    findSharedExpenses();
                 } else {
                     await signInAnonymously(auth);
                 }
-            } catch (error) {
-                console.error("Authentication failed:", error);
-                userIdEl.textContent = "Authentication Failed.";
+            });
+        }
+
+        // --- Data Fetching and Listeners ---
+
+        function listenForExpenses(ownerId) {
+            if (expensesUnsubscribe) expensesUnsubscribe(); // Stop listening to previous owner's expenses
+            
+            const expensesColPath = `artifacts/${appId}/users/${ownerId}/grab_expenses`;
+            const q = query(collection(db, expensesColPath));
+
+            expensesUnsubscribe = onSnapshot(q, (snapshot) => {
+                const expenses = [];
+                snapshot.forEach(doc => {
+                    expenses.push({ id: doc.id, ...doc.data() });
+                });
+                expenses.sort((a, b) => new Date(b.date) - new Date(a.date));
+                expensesData[ownerId] = expenses; // Cache expenses
+                
+                // Only update UI if we are currently viewing this owner's expenses
+                if (viewSelectorEl.value === ownerId) {
+                    populateMonthFilter();
+                    updateUI();
+                }
+            }, (error) => {
+                console.error("Error fetching expenses: ", error);
+                tableBodyEl.innerHTML = `<tr><td colspan="3" class="text-center p-8 text-red-400">Error loading data. Check permissions.</td></tr>`;
+            });
+        }
+
+        function listenForPermissions() {
+            if (permissionsUnsubscribe) permissionsUnsubscribe();
+            
+            const permsDocPath = `artifacts/${appId}/users/${userId}/permissions/settings`;
+            permissionsUnsubscribe = onSnapshot(doc(db, permsDocPath), (docSnap) => {
+                const viewers = docSnap.exists() ? docSnap.data().viewers || [] : [];
+                renderViewersList(viewers);
+            });
+        }
+
+        async function findSharedExpenses() {
+            const usersCollection = collection(db, `artifacts/${appId}/users`);
+            const q = query(usersCollection);
+            const usersSnapshot = await getDocs(q);
+
+            for(const userDoc of usersSnapshot.docs) {
+                const ownerId = userDoc.id;
+                if (ownerId === userId) continue; // Skip self
+
+                const permsDocPath = `artifacts/${appId}/users/${ownerId}/permissions/settings`;
+                const permsDoc = await getDoc(doc(db, permsDocPath));
+
+                if (permsDoc.exists() && permsDoc.data().viewers && permsDoc.data().viewers.includes(userId)) {
+                    if (!viewSelectorEl.querySelector(`option[value="${ownerId}"]`)) {
+                        const option = document.createElement('option');
+                        option.value = ownerId;
+                        option.textContent = `Shared by ${ownerId.substring(0, 8)}...`;
+                        viewSelectorEl.appendChild(option);
+                    }
+                }
             }
         }
 
-        /**
-         * Sets up a real-time listener for the user's expenses in Firestore.
-         */
-        function listenForExpenses() {
-            if (!db || !userId) return;
+        // --- UI Rendering ---
 
-            // The collection path is constructed to be user-specific and secure.
-            const expensesColPath = `/artifacts/${appId}/users/${userId}/grab_expenses`;
-            const expensesCollection = collection(db, expensesColPath);
-            const q = query(expensesCollection); // We fetch all and sort/filter client-side
-
-            onSnapshot(q, (snapshot) => {
-                loadingStateEl.style.display = 'none';
-                allExpenses = [];
-                snapshot.forEach(doc => {
-                    allExpenses.push({ id: doc.id, ...doc.data() });
-                });
-
-                // Sort expenses by date, newest first
-                allExpenses.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-                if (allExpenses.length === 0) {
-                    noDataStateEl.style.display = 'table-row';
-                } else {
-                    noDataStateEl.style.display = 'none';
-                }
-                
-                populateMonthFilter();
-                updateUI();
-
-            }, (error) => {
-                console.error("Error fetching expenses: ", error);
-                loadingStateEl.innerHTML = `<td colspan="3" class="text-center p-8 text-red-400">Error loading data.</td>`;
-            });
-        }
-        
-        /**
-         * Populates the month filter dropdown based on available expense dates.
-         */
         function populateMonthFilter() {
+            const currentOwnerId = viewSelectorEl.value;
+            const currentExpenses = expensesData[currentOwnerId] || [];
             const months = new Set();
-            allExpenses.forEach(exp => {
-                // Format date as "YYYY-MM" to represent a month uniquely
+            currentExpenses.forEach(exp => {
                 const date = new Date(exp.date);
                 const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
                 months.add(monthKey);
             });
 
-            // Clear existing options except "All Months"
             monthFilterEl.innerHTML = '<option value="all">All Months</option>';
-            
-            // Sort months chronologically and add them as options
             Array.from(months).sort().reverse().forEach(monthKey => {
                 const [year, month] = monthKey.split('-');
                 const date = new Date(year, month - 1);
                 const optionText = date.toLocaleString('default', { month: 'long', year: 'numeric' });
-                
                 const option = document.createElement('option');
                 option.value = monthKey;
                 option.textContent = optionText;
@@ -242,46 +257,31 @@
             });
         }
 
-
-        /**
-         * Renders the expenses in the table and calculates totals based on the filter.
-         */
         function updateUI() {
+            const currentOwnerId = viewSelectorEl.value;
+            const allCurrentExpenses = expensesData[currentOwnerId] || [];
             const selectedMonth = monthFilterEl.value;
             
             const filteredExpenses = selectedMonth === 'all' 
-                ? allExpenses 
-                : allExpenses.filter(exp => {
+                ? allCurrentExpenses 
+                : allCurrentExpenses.filter(exp => {
                     const date = new Date(exp.date);
                     const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
                     return monthKey === selectedMonth;
                 });
 
-            // Clear previous table rows
             tableBodyEl.innerHTML = '';
-            
-            if (filteredExpenses.length === 0 && allExpenses.length > 0) {
-                 tableBodyEl.innerHTML = `<tr><td colspan="3" class="text-center p-8 text-gray-500">No expenses for the selected month.</td></tr>`;
-            } else if (allExpenses.length === 0) {
-                 loadingStateEl.style.display = 'none';
-                 noDataStateEl.style.display = 'table-row';
+            if (filteredExpenses.length === 0) {
+                tableBodyEl.innerHTML = `<tr><td colspan="3" class="text-center p-8 text-gray-500">No expenses found for this period.</td></tr>`;
             }
 
             let total = 0;
             filteredExpenses.forEach(exp => {
                 const row = document.createElement('tr');
                 row.className = 'bg-gray-800 border-b border-gray-700 hover:bg-gray-600';
-                
-                const formattedDate = new Date(exp.date).toLocaleDateString('en-US', {
-                    year: 'numeric', month: 'long', day: 'numeric'
-                });
+                const formattedDate = new Date(exp.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
                 const formattedTotal = `₱${Number(exp.total).toFixed(2)}`;
-
-                row.innerHTML = `
-                    <td class="px-6 py-4 font-medium text-white whitespace-nowrap">${exp.merchant || 'N/A'}</td>
-                    <td class="px-6 py-4">${formattedDate}</td>
-                    <td class="px-6 py-4 text-right font-mono">${formattedTotal}</td>
-                `;
+                row.innerHTML = `<td class="px-6 py-4 font-medium text-white whitespace-nowrap">${exp.merchant || 'N/A'}</td><td class="px-6 py-4">${formattedDate}</td><td class="px-6 py-4 text-right font-mono">${formattedTotal}</td>`;
                 tableBodyEl.appendChild(row);
                 total += Number(exp.total);
             });
@@ -289,13 +289,80 @@
             monthTotalEl.textContent = `₱${total.toFixed(2)}`;
         }
 
+        function renderViewersList(viewers) {
+            viewersListEl.innerHTML = '';
+            if (viewers.length === 0) {
+                viewersListEl.innerHTML = `<li class="text-sm text-gray-500">No users have access.</li>`;
+            }
+            viewers.forEach(viewerId => {
+                const li = document.createElement('li');
+                li.className = 'flex justify-between items-center bg-gray-700 p-2 rounded-lg';
+                li.innerHTML = `<span class="text-sm truncate">${viewerId}</span><button data-viewer-id="${viewerId}" class="remove-viewer-btn bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded-md transition-colors">Remove</button>`;
+                viewersListEl.appendChild(li);
+            });
+        }
+
+        // --- Event Handlers ---
+
+        async function handleAddViewer() {
+            const newViewerId = addViewerInput.value.trim();
+            if (!newViewerId || newViewerId === userId) {
+                alert("Please enter a valid User ID that is not your own.");
+                return;
+            }
+            
+            const permsDocRef = doc(db, `artifacts/${appId}/users/${userId}/permissions/settings`);
+            try {
+                // Use set with merge to create the doc if it doesn't exist, or update it if it does.
+                await setDoc(permsDocRef, { viewers: arrayUnion(newViewerId) }, { merge: true });
+                addViewerInput.value = '';
+            } catch (error) {
+                console.error("Error adding viewer:", error);
+                alert("Could not add viewer. Please try again.");
+            }
+        }
+
+        async function handleRemoveViewer(e) {
+            if (!e.target.classList.contains('remove-viewer-btn')) return;
+            const viewerIdToRemove = e.target.dataset.viewerId;
+            const permsDocRef = doc(db, `artifacts/${appId}/users/${userId}/permissions/settings`);
+            try {
+                await updateDoc(permsDocRef, { viewers: arrayRemove(viewerIdToRemove) });
+            } catch (error) {
+                console.error("Error removing viewer:", error);
+                alert("Could not remove viewer. Please try again.");
+            }
+        }
+        
+        function handleViewChange() {
+            const selectedOwnerId = viewSelectorEl.value;
+            if (!expensesData[selectedOwnerId]) {
+                 tableBodyEl.innerHTML = `<tr><td colspan="3" class="text-center p-8 text-gray-400">Loading expenses...</td></tr>`;
+                listenForExpenses(selectedOwnerId);
+            } else {
+                populateMonthFilter();
+                updateUI();
+            }
+        }
+
+        function copyUserId() {
+            navigator.clipboard.writeText(userId).then(() => {
+                alert('User ID copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy User ID: ', err);
+            });
+        }
+
         // --- Event Listeners ---
+        addViewerBtn.addEventListener('click', handleAddViewer);
+        viewersListEl.addEventListener('click', handleRemoveViewer);
+        viewSelectorEl.addEventListener('change', handleViewChange);
         monthFilterEl.addEventListener('change', updateUI);
+        userIdEl.addEventListener('click', copyUserId);
 
         // --- App Initialization ---
         initializeFirebase();
         setupAuthListener();
-
     </script>
 </body>
 </html>
